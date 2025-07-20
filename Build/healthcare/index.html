@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CareBot App</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-image: url('https://i.pinimg.com/736x/85/e5/f5/85e5f58dc07aa9b8d08b125934ade8ca.jpg');
+      background-size: cover;
+      background-position: center;
+      color: #000;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.8);
+      margin: 40px auto;
+      padding: 20px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+    }
+    h1, h2, h3 {
+      color: black;
+    }
+    input, select {
+      padding: 10px;
+      margin: 10px 0;
+      width: 80%;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+    }
+    button {
+      background: black;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      margin: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .chat-box {
+      text-align: left;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 10px;
+      background-color: #fff;
+      font-size: 14px;
+    }
+    .typing {
+      border-right: .1em solid black;
+      white-space: nowrap;
+      overflow: hidden;
+      width: 0;
+      animation: typing 3s steps(40, end) forwards;
+    }
+    @keyframes typing {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container" id="page1">
+  <h1>Welcome to CareBot 👩‍⚕</h1>
+  <h3 class="typing">Your AI Health Assistant</h3>
+  <input type="text" id="name" placeholder="Enter your name">
+  <input type="text" id="age" placeholder="Enter your age (number only)">
+  <input type="text" id="address" placeholder="Enter your address">
+  <select id="language">
+    <option value="en">English</option>
+    <option value="kn">Kannada</option>
+  </select>
+  <button onclick="goToPage2()">➡ Continue</button>
+</div>
+
+<div class="container hidden" id="page2">
+  <h2>Hi <span id="userNameDisplay"></span>, How can I help you?</h2>
+  <button onclick="startSpeaking()">🎤 Start Speaking</button>
+  <button onclick="goToPremium()">💎 Go Premium</button>
+  <div class="chat-box" id="chatHistory"></div>
+</div>
+
+<div class="container hidden" id="premiumPage">
+  <h2>🌟 Premium Access - ₹99</h2>
+  <p>💬 Chat with Doctors<br>📝 Access Healthcare Reports</p>
+  <button onclick="goToPage2()">🔙 Go Back</button>
+</div>
+
+<script>
+  const encouragements = [
+    "You're doing great!",
+    "Take care of yourself. You matter.",
+    "Health is wealth!",
+    "I'm here to help you anytime. 💙"
+  ];
+
+  const healthData = {
+    // English
+    "headache": ["Take rest and stay hydrated.", "Paracetamol 500mg"],
+    "fever": ["Monitor your temperature and rest.", "Crocin, Paracetamol"],
+    "cold": ["Stay warm and drink fluids.", "Cetirizine at night"],
+    "cough": ["Avoid cold drinks and rest.", "Benadryl or Honitus"],
+    "stomach pain": ["Eat light and avoid spicy food.", "Cyclopam, Meftal-Spas"],
+    "vomiting": ["Drink ORS and rest.", "Domperidone or Emeset"],
+    "diabetes": ["Maintain diet and check sugar regularly.", "Consult doctor for insulin or Metformin"],
+    "high blood pressure": ["Reduce salt intake, relax.", "Amlodipine or Telmisartan"],
+    "mental stress": ["Meditation and good sleep helps.", "No tablets needed"],
+    "acidity": ["Avoid oily food, drink cold milk.", "Pantoprazole or Gelusil"],
+    "menstrual cramps": ["Use hot water bag, rest.", "Meftal-Spas or Drotin"],
+    
+    // Kannada
+    "ತಲೆನೋವು": ["ನೀವು ವಿಶ್ರಾಂತಿ ತೆಗೆದುಕೊಳ್ಳಿ ಮತ್ತು ನೀರು ಕುಡಿಯಿರಿ.", "ಪ್ಯಾರಾಸಿಟಮಾಲ್ 500mg"],
+    "ಜ್ವರ": ["ನಿಮ್ಮ ತಾಪಮಾನವನ್ನು ನೋಡಿಕೊಳ್ಳಿ ಮತ್ತು ವಿಶ್ರಾಂತಿ ತೆಗೆದುಕೊಳ್ಳಿ.", "ಕ್ರೊಸಿನ್ ಅಥವಾ ಪ್ಯಾರಾಸಿಟಮಾಲ್"],
+    "ಜಲಬಾಯಿ": ["ತಂಪಾದ ಪಾನೀಯಗಳನ್ನು ತಪ್ಪಿಸಿ.", "ಸೆಟಿರಿಜಿನ್"],
+    "ಖಾಸಿ": ["ತಂಪಾದ ನೀರನ್ನು ತಪ್ಪಿಸಿ.", "ಬೆನಡ್ರಿಲ್ ಅಥವಾ ಹೋನಿಟಸ್"],
+    "ಹುಜುಕು": ["ಮಸಾಲೆ ಯುಕ್ತ ಆಹಾರವನ್ನು ತಪ್ಪಿಸಿ.", "ಸೈಕ್ಲೋಪ್ಯಾಮ್ ಅಥವಾ ಮೆಫ್ಟಾಲ್ ಸ್ಪಾಸ್"],
+    "ಊಜ್ವಾರ": ["ORS ಕುಡಿಯಿರಿ ಮತ್ತು ವಿಶ್ರಾಂತಿ ಪಡೆದುಕೊಳ್ಳಿ.", "ಡಾಂಪೆರಿಡೋನ್ ಅಥವಾ ಎಮೆಸೆಟ್"],
+    "ಡಯಾಬಿಟಿಸ್": ["ಆಹಾರ ನಿಯಂತ್ರಿಸಿ ಮತ್ತು ಸಕ್ಕರೆ ಮಟ್ಟ ಪರಿಶೀಲಿಸಿ.", "ಇನ್ಸುಲಿನ್ ಅಥವಾ ಮೆಟ್‌ಫಾರ್ಮಿನ್"],
+    "ಬಿಪಿ": ["ಉಪ್ಪಿನ ಸೇವನೆಯನ್ನು ಕಡಿಮೆಮಾಡಿ.", "ಟೆಲ್ಮಿಸಾರ್ಟನ್ ಅಥವಾ ಎಮ್ಲೋಡಿಪೈನ್"],
+    "ಮಾನಸಿಕ ಒತ್ತಡ": ["ಧ್ಯಾನ ಮಾಡಿ ಮತ್ತು ವಿಶ್ರಾಂತಿ ಪಡೆಯಿರಿ.", "ಔಷಧ ಅಗತ್ಯವಿಲ್ಲ"],
+    "ಜ್ವರದ ಪ್ರಭಾವ": ["ಹೆಚ್ಚು ನೀರು ಕುಡಿಯಿರಿ ಮತ್ತು ವಿಶ್ರಾಂತಿ ಪಡೆಯಿರಿ.", "ಪ್ಯಾರಾಸಿಟಮಾಲ್"],
+    "ಪಿತ್ತ": ["ತೆಳ್ಳನೆಯ ಆಹಾರ ತೆಗೆದುಕೊಳ್ಳಿ.", "ಪ್ಯಾಂಟೋಪ್ರಜೋಲ್ ಅಥವಾ ಜೆಲುಸಿಲ್"],
+    "ಮಾಸಿಕ ನೋವು": ["ಹಾಟ್ ವಾಟರ್ ಬ್ಯಾಗ್ ಉಪಯೋಗಿಸಿ.", "ಮೆಫ್ಟಾಲ್ ಸ್ಪಾಸ್ ಅಥವಾ ಡ್ರೋಟಿನ್"]
+  };
+
+  let userLang = "en";
+
+  function goToPage2() {
+    const name = document.getElementById('name').value.trim();
+    const age = document.getElementById('age').value.trim();
+    const address = document.getElementById('address').value.trim();
+    userLang = document.getElementById('language').value;
+
+    if (!name || !age || !address) {
+      alert("Please fill all fields.");
+      return;
+    }
+
+    if (!/^\d+$/.test(age)) {
+      alert("Age must be a number.");
+      return;
+    }
+
+    document.getElementById('userNameDisplay').textContent = name;
+    document.getElementById('page1').classList.add("hidden");
+    document.getElementById('premiumPage').classList.add("hidden");
+    document.getElementById('page2').classList.remove("hidden");
+  }
+
+  function goToPremium() {
+    document.getElementById('page2').classList.add("hidden");
+    document.getElementById('premiumPage').classList.remove("hidden");
+  }
+
+  function startSpeaking() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = userLang === "kn" ? "kn-IN" : "en-IN";
+    recognition.start();
+
+    recognition.onresult = function(event) {
+      const transcript = event.results[0][0].transcript.toLowerCase();
+      updateChat("👤 You: " + transcript);
+
+      let found = false;
+      for (let issue in healthData) {
+        if (transcript.includes(issue)) {
+          found = true;
+          const [advice, tablet] = healthData[issue];
+          const encouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
+          const reply = `🤖 CareBot: ${advice} - 💊 ${tablet}`;
+          updateChat(reply);
+          updateChat(`💙 ${encouragement}`);
+          speak(`${advice}. ${tablet}. ${encouragement}`);
+          break;
+        }
+      }
+
+      if (!found) {
+        const fallback = userLang === "kn"
+          ? "🤖 CareBot: ಕ್ಷಮಿಸಿ, ನಾನು ಅರ್ಥಮಾಡಿಕೊಳ್ಳಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ."
+          : "🤖 CareBot: Sorry, I didn’t understand. Please try again.";
+        updateChat(fallback);
+        speak(fallback.replace("🤖 CareBot: ", ""));
+      }
+    };
+  }
+
+  function updateChat(message) {
+    const chat = document.getElementById('chatHistory');
+    chat.innerHTML += `<div>${message}</div>`;
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function speak(text) {
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = userLang === "kn" ? "kn-IN" : "en-IN";
+    speechSynthesis.speak(utter);
+  }
+</script>
